@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
 
@@ -19,25 +27,13 @@ jobs:
       matrix:
         include:
           - platform: windows
-            os: self-hosted
+            os: windows-latest
             arch: amd64
-          # - platform: windows
-          #   os: windows-11-arm
-          #   arch: arm64
-          - platform: macos
-            os: macos-13
-            arch: amd64
+          - platform: android
+            os: ubuntu-latest
           - platform: macos
             os: macos-latest
             arch: arm64
-          - platform: android
-            os: ubuntu-latest
-          - platform: linux
-            os: ubuntu-22.04
-            arch: amd64
-          # - platform: linux
-          #   os: ubuntu-24.04-arm
-          #   arch: arm64
 
     steps:
       - name: Setup rust
@@ -173,20 +169,19 @@ jobs:
           channel: 'master'
           cache: true
       - name: Setup Flutter
-        if: ${{ !(startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm') || matrix.os == 'self-hosted') }}
+        if: ${{ !(startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm') || matrix.os == 'windows-latest') }}
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
       
       - name: Use Local Flutter (Self-hosted Windows)
-        if: matrix.os == 'self-hosted' && startsWith(matrix.platform, 'windows')
+        if: matrix.os == 'windows-latest'
         shell: bash
         run: |
           echo "Using local Flutter installation"
           flutter --version
           flutter doctor
-      #          flutter-version: 3.29.3
 
       - name: Get Flutter Dependency
         run: flutter pub get
