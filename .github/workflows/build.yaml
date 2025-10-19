@@ -179,19 +179,12 @@ jobs:
           channel: 'master'
           cache: true
       - name: Setup Flutter
-        if: ${{ !(startsWith(matrix.os, 'windows-11-arm') || startsWith(matrix.os, 'ubuntu-24.04-arm') || matrix.os == 'windows-latest') }}
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
       
-      - name: Use Local Flutter (Self-hosted Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          echo "Using local Flutter installation"
-          flutter --version
-          flutter doctor
+      # 删除了 Use Local Flutter (Self-hosted Windows) 步骤，因为我们现在使用 flutter-action 来安装 Flutter
 
       - name: Get Flutter Dependency
         run: flutter pub get
