@@ -184,8 +184,20 @@ jobs:
           channel: 'stable'
           cache: true
       
-      # 删除了 Use Local Flutter (Self-hosted Windows) 步骤，因为我们现在使用 flutter-action 来安装 Flutter
-
+      # 添加 analyzer 更新步骤以解决版本不兼容问题
+      - name: Upgrade packages to fix analyzer issue
+        run: |
+          flutter pub upgrade
+          flutter pub add analyzer:^8.4.0 --dev
+      
+      # 修复代码生成问题的步骤
+      - name: Fix code generation issues
+        run: |
+          # 删除已生成的文件以便重新生成
+          rm -rf lib/models/generated/
+          rm -rf lib/providers/generated/
+          rm -rf lib/clash/generated/
+          
       - name: Get Flutter Dependency
         run: flutter pub get
 
