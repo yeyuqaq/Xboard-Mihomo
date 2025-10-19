@@ -1,16 +1,26 @@
 name: build
 
 on:
-  push:
-    tags:
-      - 'v*'
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Build platform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - windows
+        - android
+        - macos
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+        - release
+        - debug
 
 env:
   IS_STABLE: ${{ !contains(github.ref, '-') }}
