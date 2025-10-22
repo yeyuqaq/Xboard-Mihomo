@@ -1,10 +1,26 @@
-name: build
+name: Build & Release
 on:
+  # 手动触发（在 Actions 页面点击 "Run workflow"）
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag (e.g. v1.2.3). Leave empty for test build.'
+        required: false
+        type: string
+      is_stable:
+        description: 'Is this a stable release? (affects changelog & env)'
+        required: true
+        type: boolean
+        default: false
+
+  # 自动触发：推送 v* 标签时
   push:
     tags:
       - 'v*'
+
 env:
-  IS_STABLE: ${{ !contains(github.ref, '-') }}
+  IS_STABLE: ${{ github.event_name == 'push' || (github.event.inputs.is_stable == 'true') }}
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -58,12 +74,8 @@ jobs:
         if: matrix.platform == 'windows'
         shell: bash
         run: |
-          # Install Inno Setup via Chocolatey
-          choco install innosetup -y --no-progress
+          choco install innosetup jq -y --no-progress
           echo "C:/Program Files (x86)/Inno Setup 6" >> $GITHUB_PATH
-
-          # Install jq
-          choco install jq -y --no-progress
           echo "C:/ProgramData/chocolatey/bin" >> $GITHUB_PATH
 
       - name: Get Flutter Dependencies
@@ -170,30 +182,8 @@ jobs:
 
       - name: Generate release.md
         run: |
-          tags=($(git tag --merged $(git rev-parse HEAD) --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/chen08209/FlClash/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")' || echo "")
-          currentTag=""
-          for ((i = 0; i <= ${#tags[@]}; i++)); do
-            if (( i < ${#tags[@]} )); then
-              tag=${tags[$i]}
-            else
-              tag=""
-            fi
-            if [ -n "$currentTag" ] && [ -n "$preTag" ]; then
-              if [ "$(echo -e "$currentTag\n$preTag" | sort -V | head -n 1)" == "$currentTag" ]; then
-                break
-              fi
-            fi
-            if [ -n "$currentTag" ]; then
-              if [ -n "$tag" ]; then
-                git log --pretty=format:"%B" "$tag..$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
-              else
-                git log --pretty=format:"%B" "$currentTag" | awk 'NF {print "- " $0} !NF {print ""}' >> release.md
-              fi
-              echo "" >> release.md
-            fi
-            currentTag=$tag
-          done
+          git log --oneline -n 20 > release.md
+          echo -e "\n---\nFull changelog in CHANGELOG.md" >> release.md
 
       - name: Generate SHA256 checksums
         run: |
@@ -205,5 +195,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.version_tag || github.ref_name }}
           files: ./dist/*
           body_path: './release.md'
