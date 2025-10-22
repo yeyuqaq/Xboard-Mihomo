@@ -86,16 +86,17 @@ jobs:
           mkdir -Force C:\build-cache | Out-Null
           echo "Build environment prepared."
 
-      # Example build step
+      # ✅ Build Rust project in services/helper/
       - name: Build project
+        working-directory: services/helper
         run: |
           echo "Building for ${{ matrix.platform }} (${{ matrix.arch }})"
           cargo build --release
 
-      # Example artifact upload
+      # ✅ Upload binaries from correct path
       - name: Upload binaries
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.platform }}-${{ matrix.arch }}
-          path: target/release/
+          path: services/helper/target/release/
