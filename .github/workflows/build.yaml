@@ -14,9 +14,6 @@ on:
         default: false
 
   # 自动触发：推送 v* 标签时
-  push:
-    tags:
-      - 'v*'
 
 env:
   IS_STABLE: ${{ github.event_name == 'push' || (github.event.inputs.is_stable == 'true') }}
